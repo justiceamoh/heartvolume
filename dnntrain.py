@@ -17,7 +17,7 @@ from time import time
 from keras.models import Model, load_model
 from keras.layers import Input, Dense, Lambda
 from keras.layers import Flatten, Reshape, BatchNormalization
-from keras.layers.advanced_activations import PReLU
+from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from keras import backend as K
 from keras.callbacks import TensorBoard
