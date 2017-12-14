@@ -27,11 +27,15 @@ from sklearn.model_selection import train_test_split
 from utils import plot_log
 
 # Global Parameters
-path = sys.argv[1]
+path = sys.argv[-1]
 
 # Data load function
-def load_data(filename,prints=False):
+def load_data(filename,prints=False,subset=False):
     data   = pd.read_csv(filename,header=None)
+    if subset:
+        data = data.sample(frac=0.2,random_state=32).reset_index(drop=True)
+    else:
+        data = data.sample(frac=1,random_state=32).reset_index(drop=True)    
     x_data = data.iloc[:,:-1].values
     y_data = data.iloc[:,-1].values
     if prints:
@@ -41,7 +45,7 @@ def load_data(filename,prints=False):
 
 # Load data
 filename = path + '/train.csv'
-x_train,y_train=load_data(filename)
+x_train,y_train=load_data(filename,True,True)
 x_train,x_valid,y_train,y_valid = train_test_split(x_train,y_train,test_size=0.33,random_state=32)
 
 ## Training Params
