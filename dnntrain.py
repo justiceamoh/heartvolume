@@ -24,7 +24,7 @@ from keras.callbacks import TensorBoard
 
 # Other Imports
 from sklearn.model_selection import train_test_split
-from utils import plot_log
+from utils import plot_log, run_tests
 
 # Global Parameters
 path = sys.argv[-1]
@@ -50,7 +50,7 @@ x_train,x_valid,y_train,y_valid = train_test_split(x_train,y_train,test_size=0.3
 
 ## Training Params
 num_batch = 10
-num_epoch = 1#30
+num_epoch = 30
 
 # Parameters
 ndim = x_train.shape[1]
@@ -85,6 +85,7 @@ model.compile(optimizer='adam',loss='mean_squared_error')
 modelname = path + '/model.h5'
 logname   = path + '/log.csv'
 figname   = path + '/fig.png'
+tplotname = path + '/tplot.png'
 
 # Callback Functions
 csv_logger = CSVLogger(logname)
@@ -109,7 +110,11 @@ s = m[1]                    # seconds
 print '\nTotal training time: %02dd:%02dh:%02dm:%02ds'% (d[0],h[0],m[0],s)
 print ""
 print 'Saving log curves..'
-# plot_log(log,imgname=figname)
+plot_log(log,imgname=figname)
+
+
+# Run test
+run_tests(path,model,tplotname)
 
 
 

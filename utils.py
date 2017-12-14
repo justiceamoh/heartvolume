@@ -31,3 +31,29 @@ def plot_log(log,imgname='trainlog.png'):
     fig.savefig(imgname)
     print 'Log curves saved as: ' + imgname
     return
+
+def run_tests(path,model,imgname='testplots.png'):
+    # Test Files
+    tfiles = [fname for fname in os.listdir(path+'/') if fname.startswith("test")]
+    fig, axs = plt.subplots(len(tfiles),figsize=(5,6))
+
+    for i, file in enumerate(tfiles):
+        fname = path + '/' + file
+        x_test,y_test=load_data(fname)
+        y_predict = model.predict(x_test)
+        loss = model.evaluate(x_test,y_test,verbose=0)
+        
+        xx = range(len(y_test))
+
+        axs[i].plot(xx,y_test,xx,y_predict,'g')
+        header = '{0}, mse={1:.02f}'.format(fname[9:-4],loss)
+        axs[i].set_title(header)
+
+        oname = path + '/ypred{}.csv'.format(i+1)
+        tname = path + '/ytest{}.csv'.format(i+1)
+        np.savetxt(oname,y_predict,delimiter=',')
+        np.savetxt(tname,y_test,delimiter=',')
+
+    plt.legend(['Original','Predicted'],loc=1)
+    plt.tight_layout()
+    fig.savefig(imgname)
