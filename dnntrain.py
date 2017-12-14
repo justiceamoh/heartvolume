@@ -24,40 +24,47 @@ from keras.callbacks import TensorBoard
 
 # Other Imports
 from sklearn.model_selection import train_test_split
-from utils import plot_log, run_tests
+from sklearn.preprocessing import MinMaxScaler
+from utils import load_data, plot_log, run_tests
 
 # Global Parameters
 path = sys.argv[-1]
 
-# Data load function
-def load_data(filename,prints=False,subset=False):
-    data   = pd.read_csv(filename,header=None)
-    if subset:
-        data = data.sample(frac=0.2,random_state=32).reset_index(drop=True)
-    else:
-        data = data.sample(frac=1,random_state=32).reset_index(drop=True)    
-    x_data = data.iloc[:,:-1].values
-    y_data = data.iloc[:,-1].values
-    if prints:
-        print 'X shape:', x_data.shape
-        print 'Y shape:', y_data.shape
-    return x_data,y_data
 
 # Load data
 filename = path + '/train.csv'
-x_train,y_train=load_data(filename,True,True)
-x_train,x_valid,y_train,y_valid = train_test_split(x_train,y_train,test_size=0.33,random_state=32)
+x_train,y_train=load_data(filename,prints=True,subset=False)
+scaler  = MinMaxScaler(feature_range=(-1,1)).fit(y_train.reshape(-1,1))
+y_train = scaler.transform(y_train.reshape(-1,1)).squeeze()
+x_train,x_valid,y_train,y_valid = train_test_split(x_train,y_train,test_size=0.01,random_state=32)
+
+# ## Training Params
+# num_batch = 26
+# num_epoch = 30
+# patience  = 10
+
+# # Parameters
+# ndim = x_train.shape[1]
+# L1   = 148
+# L2   = 142
+# L4   = 23
 
 ## Training Params
-num_batch = 10
-num_epoch = 30
+num_batch = 22
+num_epoch = 15
+patience  = 10
 
 # Parameters
 ndim = x_train.shape[1]
-L1   = 256
-L2   = 256
-L3   = 256
-L4   = 32
+L1   = 127
+L2   = 169
+L4   = 16
+
+
+# Model 2
+# {'m_units': 172, 'o_units': 20, 'batch_size': 27, 'i_units': 127}
+# {'m_units': 169, 'o_units': 16, 'batch_size': 22, 'i_units': 178}
+
 
 # Build DNN
 def build_model():
@@ -66,8 +73,8 @@ def build_model():
     h = BatchNormalization()(h)
     h = Dense(L2,activation='relu',kernel_regularizer=regularizers.l2(0.01),name='L2')(h)
     h = BatchNormalization()(h)
-    h = Dense(L3,activation='relu',kernel_regularizer=regularizers.l2(0.01),name='L3')(h)
-    h = BatchNormalization()(h)
+    # h = Dense(L3,activation='relu',kernel_regularizer=regularizers.l2(0.01),name='L3')(h)
+    # h = BatchNormalization()(h)
     h = Dense(L4,activation='relu',name='L4')(h)
     h = BatchNormalization()(h)
     y = Dense(1,activation='linear',name='Output')(h)
@@ -89,8 +96,8 @@ tplotname = path + '/tplot.png'
 
 # Callback Functions
 csv_logger = CSVLogger(logname)
-e_stopper  = EarlyStopping(monitor='val_loss', min_delta=0, patience=5)
-checkpoint = ModelCheckpoint(modelname,monitor='val_loss',verbose=1,save_best_only=True)
+# e_stopper  = EarlyStopping(monitor='val_loss', min_delta=0, patience=patience)
+# checkpoint = ModelCheckpoint(modelname,monitor='val_loss',verbose=1,save_best_only=True)
 
 # Train Model
 then = time()
@@ -99,7 +106,8 @@ log = model.fit(x_train, y_train,
                 epochs=num_epoch,
                 shuffle=True,
                 validation_data=(x_valid,y_valid),
-                callbacks=[csv_logger,e_stopper,checkpoint],
+                callbacks = [csv_logger],
+                # callbacks=[csv_logger,e_stopper,checkpoint],
                 verbose=1)
 
 now = time()
@@ -114,7 +122,38 @@ plot_log(log,imgname=figname)
 
 
 # Run test
-run_tests(path,model,tplotname)
+# run_tests(path,model,tplotname)
+
+# Test Files
+tfiles = [fname for fname in os.listdir(path+'/') if fname.startswith("test")]
+fig, axs = plt.subplots(len(tfiles),figsize=(8,6))
+
+for i, file in enumerate(tfiles):
+    fname = path + '/' + file
+    x_test,y_test=load_data(fname)
+    y_test = scaler.transform(y_test.reshape(-1,1)).squeeze()
+    y_predict = model.predict(x_test)
+    loss = model.evaluate(x_test,y_test,verbose=0)
+    
+    xx = range(len(y_test))
+
+    if len(tfiles)==1 :
+        ax = axs
+    else:
+        ax = axs[i]
+
+    ax.plot(xx,y_test,xx,y_predict,'g')
+    header = '{0}, mse={1:.02f}'.format(fname[9:-4],loss)
+    ax.set_title(header)
+
+    oname = path + '/ypred{}.csv'.format(i+1)
+    tname = path + '/ytest{}.csv'.format(i+1)
+    np.savetxt(oname,y_predict,delimiter=',')
+    np.savetxt(tname,y_test,delimiter=',')
+
+plt.legend(['Original','Predicted'],loc=1)
+plt.tight_layout()
+fig.savefig(tplotname)
 
 
 

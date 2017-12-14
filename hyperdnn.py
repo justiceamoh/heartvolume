@@ -72,7 +72,7 @@ x_train,x_valid,y_train,y_valid = train_test_split(x_train,y_train,test_size=0.3
 def f_nn(params):
     ## Training Params
     num_batch = params['batch_size']
-    num_epoch = 1#30
+    num_epoch = 20
 
     addlayer  = params['layers'] == 'Five'
 
@@ -102,11 +102,11 @@ def f_nn(params):
 
     # Compile Model
     model = build_model()
-    model.summary()
+    # model.summary()
     model.compile(optimizer='adam',loss='mean_squared_error')
 
     modelname  = 'hypermodel.h5'
-    e_stopper  = EarlyStopping(monitor='val_loss', min_delta=0, patience=5)
+    e_stopper  = EarlyStopping(monitor='val_loss', min_delta=0, patience=8)
     checkpoint = ModelCheckpoint(modelname,monitor='val_loss',verbose=1,save_best_only=True)
 
     # Train Model
@@ -116,10 +116,14 @@ def f_nn(params):
                     shuffle=True,
                     validation_data=(x_valid,y_valid),
                     callbacks=[e_stopper,checkpoint],
-                    verbose=1)
+                    verbose=2)
 
     model = load_model(modelname)
+
     loss = model.evaluate(x_valid,y_valid,verbose=0)
+    print '\n\nLoss: {:0.4f}'.format(loss)
+    print '5Layers: {}, L1: {}, L2: {}, L4: {}'.format(addlayer,L1,L2,L4)
+    print 'BatchSize: {}\n\n'.format(num_batch)
     return {'loss': loss, 'status': STATUS_OK}
 
 

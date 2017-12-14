@@ -4,11 +4,27 @@
 # Date: 12/13/2017
 # Description: Utility functions for training nets
 
+import os
+import pandas as pd
+import numpy as np 
 # Matplotlib with no Backend
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
+# Data load function
+def load_data(filename,prints=False,subset=False):
+    data   = pd.read_csv(filename,header=None)
+    if subset:
+        data = data.sample(frac=0.2,random_state=32).reset_index(drop=True)
+    else:
+        data = data.sample(frac=1,random_state=32).reset_index(drop=True)    
+    x_data = data.iloc[:,:-1].values
+    y_data = data.iloc[:,-1].values
+    if prints:
+        print 'X shape:', x_data.shape
+        print 'Y shape:', y_data.shape
+    return x_data,y_data
 
 def plot_log(log,imgname='trainlog.png'):
     if isinstance(log,str):
@@ -45,9 +61,14 @@ def run_tests(path,model,imgname='testplots.png'):
         
         xx = range(len(y_test))
 
-        axs[i].plot(xx,y_test,xx,y_predict,'g')
+        if len(tfiles)==1 :
+            ax = axs
+        else:
+            ax = axs[i]
+
+        ax.plot(xx,y_test,xx,y_predict,'g')
         header = '{0}, mse={1:.02f}'.format(fname[9:-4],loss)
-        axs[i].set_title(header)
+        ax.set_title(header)
 
         oname = path + '/ypred{}.csv'.format(i+1)
         tname = path + '/ytest{}.csv'.format(i+1)
