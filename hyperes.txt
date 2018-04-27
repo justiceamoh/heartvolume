@@ -1,0 +1,4 @@
+Total training time: 00d:02h:16m:01s
+
+best: 
+{'batch_size': 29, 'l3_units': 15, 'l4_units': 7, 'l1_units': 28, 'l2_units': 16}
